@@ -268,49 +268,61 @@
         }
 
         function nextQuestion() {
-            const q = QUESTIONS[currentQuestion];
-            let answer;
-            
-            if (q.type === 'choice') {
-                const selected = document.querySelector('.option.selected');
-                if (!selected) return;
-                answer = parseInt(selected.dataset.index);
-            } else {
-                answer = document.getElementById('textAnswer').value.trim();
-            }
-            
-            const isCorrect = q.type === 'choice' 
-                ? answer === q.correct 
-                : (q.caseSensitive ? answer === q.correct : answer.toLowerCase() === q.correct.toLowerCase());
-            
-            answers.push({
-                question: q.question,
-                answer: q.type === 'choice' ? q.options[answer] : answer,
-                correct: isCorrect,
-                correctAnswer: q.type === 'choice' ? q.options[q.correct] : q.correct
-            });
-            
-            // Показать правильный/неправильный ответ
-            if (q.type === 'choice') {
-                document.querySelectorAll('.option').forEach((el, i) => {
-                    el.onclick = null;
-                    el.style.cursor = 'default';
-                    if (i === q.correct) el.classList.add('correct');
-                    else if (i === answer && !isCorrect) el.classList.add('wrong');
-                });
-            }
-            
-            document.getElementById('nextBtn').textContent = currentQuestion < QUESTIONS.length - 1 ? 'Следующий вопрос' : 'Узнать результат';
-            document.getElementById('nextBtn').onclick = () => {
-                currentQuestion++;
-                if (currentQuestion < QUESTIONS.length) {
-                    renderQuestion();
-                } else {
-                    showResult();
-                }
-            };
-            document.getElementById('nextBtn').disabled = false;
+    // 🔒 Защита от двойного Enter / повторного клика
+    if (answers.length > currentQuestion) {
+        return;
+    }
+    
+    const q = QUESTIONS[currentQuestion];
+    let answer;
+    
+    if (q.type === 'choice') {
+        const selected = document.querySelector('.option.selected');
+        if (!selected) return;
+        answer = parseInt(selected.dataset.index);
+    } else {
+        answer = document.getElementById('textAnswer').value.trim();
+    }
+    
+    const isCorrect = q.type === 'choice' 
+        ? answer === q.correct 
+        : (q.caseSensitive ? answer === q.correct : answer.toLowerCase() === q.correct.toLowerCase());
+    
+    answers.push({
+        question: q.question,
+        answer: q.type === 'choice' ? q.options[answer] : answer,
+        correct: isCorrect,
+        correctAnswer: q.type === 'choice' ? q.options[q.correct] : q.correct
+    });
+    
+    // Показать правильный/неправильный ответ
+    if (q.type === 'choice') {
+        document.querySelectorAll('.option').forEach((el, i) => {
+            el.onclick = null;
+            el.style.cursor = 'default';
+            if (i === q.correct) el.classList.add('correct');
+            else if (i === answer && !isCorrect) el.classList.add('wrong');
+        });
+    } else {
+        // 🔒 Отключаем поле ввода, чтобы повторный Enter не сработал
+        const input = document.getElementById('textAnswer');
+        if (input) {
+            input.disabled = true;
+            input.blur();
         }
+    }
+    
+    document.getElementById('nextBtn').textContent = currentQuestion < QUESTIONS.length - 1 ? 'Следующий вопрос' : 'Узнать результат';
+    document.getElementById('nextBtn').onclick = () => {
+        currentQuestion++;
+        if (currentQuestion < QUESTIONS.length) {
+            renderQuestion();
+        } else {
+            showResult();
+        }
+    };
+    document.getElementById('nextBtn').disabled = false;
+}
 
         function showResult() {
             const correctCount = answers.filter(a => a.correct).length;
